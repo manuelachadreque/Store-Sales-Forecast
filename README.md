@@ -1,12 +1,16 @@
 # Store Exploratory Analysis and Sales Forecast
 
-## 1. Project Overview
+## 1. Business Understanding
 
 ### 1.1. Overview and Findings
 
 ### 1.2. Aim
 
-### 1.3 Data
+### 1.3. Requirements
+
+### 1.4. Plan
+
+## 2. Data Understanding
 
 * Id - an Id that represents a (Store, Date) duple within the test set
 * Store - a unique Id for each store
@@ -24,7 +28,7 @@
 * Promo2Since[Year/Week] - describes the year and calendar week when the store started participating in Promo2
 * PromoInterval - describes the consecutive intervals Promo2 is started, naming the months the promotion is started anew. E.g. "Feb,May,Aug,Nov" means each round starts in February, May, August, November of any given year for that store
 
-## 2. Data Understanding
+### 2.1 Load Data
 
 
 ```python
@@ -34,8 +38,6 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 ```
-
-### 2.1 Load data
 
 
 ```python
@@ -156,7 +158,7 @@ train = pd.read_csv("./Data/train.csv")
 train.head()
 ```
 
-    C:\Users\Admin\AppData\Local\Temp\ipykernel_41860\1372570245.py:2: DtypeWarning: Columns (7) have mixed types. Specify dtype option on import or set low_memory=False.
+    C:\Users\Admin\AppData\Local\Temp\ipykernel_26512\1372570245.py:2: DtypeWarning: Columns (7) have mixed types. Specify dtype option on import or set low_memory=False.
       train = pd.read_csv("./Data/train.csv")
     
 
@@ -421,46 +423,73 @@ combined_dataset.head()
 
 
 
-## 2.2. Exploring Analysis
+### 2.2 Inspect Data
 
-### 2.2.1 Inspection and Data Preparation
+
+```python
+# Get the number of rows in the dataset
+num_records = combined_dataset.shape[0]
+print(f'The dataset contains {num_records} records.')
+
+```
+
+    The dataset contains 1017209 records.
+    
+
+
+```python
+# Get the number of columns in the dataset
+num_columns = combined_dataset.shape[1]
+print(f'The dataset contains {num_columns} columns.')
+
+```
+
+    The dataset contains 18 columns.
+    
+
+
+```python
+column_data_types = combined_dataset.dtypes
+print(column_data_types)
+```
+
+    Store                          int64
+    DayOfWeek                      int64
+    Date                          object
+    Sales                          int64
+    Customers                      int64
+    Open                           int64
+    Promo                          int64
+    StateHoliday                  object
+    SchoolHoliday                  int64
+    StoreType                     object
+    Assortment                    object
+    CompetitionDistance          float64
+    CompetitionOpenSinceMonth    float64
+    CompetitionOpenSinceYear     float64
+    Promo2                         int64
+    Promo2SinceWeek              float64
+    Promo2SinceYear              float64
+    PromoInterval                 object
+    dtype: object
+    
+
+**Observation:**
+* The dataset have **1017209 records/rows**. 
+* The dataset have 18 columns.
+* The column Date should be of a type datetime:
+
+      we we proceed by transforming the type of this column into datetime using to_datetime
 
 
 ```python
 #Let's inspect the dataset and see the datetypes
-print(combined_dataset.info())
 combined_dataset['Date'] =  pd.to_datetime(combined_dataset['Date'])
 combined_dataset['Sales'] = combined_dataset['Sales'].astype(float)
 
 print(combined_dataset.info())
 ```
 
-    <class 'pandas.core.frame.DataFrame'>
-    RangeIndex: 1017209 entries, 0 to 1017208
-    Data columns (total 18 columns):
-     #   Column                     Non-Null Count    Dtype  
-    ---  ------                     --------------    -----  
-     0   Store                      1017209 non-null  int64  
-     1   DayOfWeek                  1017209 non-null  int64  
-     2   Date                       1017209 non-null  object 
-     3   Sales                      1017209 non-null  int64  
-     4   Customers                  1017209 non-null  int64  
-     5   Open                       1017209 non-null  int64  
-     6   Promo                      1017209 non-null  int64  
-     7   StateHoliday               1017209 non-null  object 
-     8   SchoolHoliday              1017209 non-null  int64  
-     9   StoreType                  1017209 non-null  object 
-     10  Assortment                 1017209 non-null  object 
-     11  CompetitionDistance        1014567 non-null  float64
-     12  CompetitionOpenSinceMonth  693861 non-null   float64
-     13  CompetitionOpenSinceYear   693861 non-null   float64
-     14  Promo2                     1017209 non-null  int64  
-     15  Promo2SinceWeek            509178 non-null   float64
-     16  Promo2SinceYear            509178 non-null   float64
-     17  PromoInterval              509178 non-null   object 
-    dtypes: float64(5), int64(8), object(5)
-    memory usage: 139.7+ MB
-    None
     <class 'pandas.core.frame.DataFrame'>
     RangeIndex: 1017209 entries, 0 to 1017208
     Data columns (total 18 columns):
@@ -489,6 +518,34 @@ print(combined_dataset.info())
     None
     
 
+We proceed the data prepation cheching the period that the dataset cover, as we see this dataset covers a period between **beggining of 2013 to July of 2025**.
+
+
+```python
+print(" This analysis is between ", combined_dataset['Date'].min(), "  and ", combined_dataset["Date"].max())
+```
+
+     This analysis is between  2013-01-01 00:00:00   and  2015-07-31 00:00:00
+    
+
+#### 2.2.1 Inspecting missing values
+
+the graph gives us a clear indication that the columns CompetitionOpenSinceMonth, CompetitionOpenSinceYear  , Promo2SinceWeek, Promo2SinceYear and  PromoInterval are the columns with more missing values
+
+
+```python
+plt.figure(figsize=(12, 6))
+sns.heatmap(combined_dataset.isnull(), cbar=False, cmap='Blues', yticklabels=False)
+plt.title("Missing Values Distribution")
+plt.show()
+```
+
+
+    
+![png](README_files/README_23_0.png)
+    
+
+
 
 ```python
 # We create new columns Year, Month, DatOfWeek and variables that will identify weekdays and weekends
@@ -503,205 +560,6 @@ combined_dataset['DayOfWeek'] = combined_dataset['Date'].dt.dayofweek  # 0=Monda
 combined_dataset['IsWeekend'] = combined_dataset['DayOfWeek'] >= 5  # True for Saturday (5) and Sunday (6)
 combined_dataset['IsWeekday'] = ~combined_dataset['IsWeekend']      
 ```
-
-
-```python
-combined_dataset.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Store</th>
-      <th>DayOfWeek</th>
-      <th>Date</th>
-      <th>Sales</th>
-      <th>Customers</th>
-      <th>Open</th>
-      <th>Promo</th>
-      <th>StateHoliday</th>
-      <th>SchoolHoliday</th>
-      <th>StoreType</th>
-      <th>...</th>
-      <th>CompetitionOpenSinceMonth</th>
-      <th>CompetitionOpenSinceYear</th>
-      <th>Promo2</th>
-      <th>Promo2SinceWeek</th>
-      <th>Promo2SinceYear</th>
-      <th>PromoInterval</th>
-      <th>Year</th>
-      <th>Month</th>
-      <th>IsWeekend</th>
-      <th>IsWeekday</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>1</td>
-      <td>4</td>
-      <td>2015-07-31</td>
-      <td>5263.0</td>
-      <td>555</td>
-      <td>1</td>
-      <td>1</td>
-      <td>0</td>
-      <td>1</td>
-      <td>c</td>
-      <td>...</td>
-      <td>9.0</td>
-      <td>2008.0</td>
-      <td>0</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>2015</td>
-      <td>7</td>
-      <td>False</td>
-      <td>True</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>2</td>
-      <td>4</td>
-      <td>2015-07-31</td>
-      <td>6064.0</td>
-      <td>625</td>
-      <td>1</td>
-      <td>1</td>
-      <td>0</td>
-      <td>1</td>
-      <td>a</td>
-      <td>...</td>
-      <td>11.0</td>
-      <td>2007.0</td>
-      <td>1</td>
-      <td>13.0</td>
-      <td>2010.0</td>
-      <td>Jan,Apr,Jul,Oct</td>
-      <td>2015</td>
-      <td>7</td>
-      <td>False</td>
-      <td>True</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>3</td>
-      <td>4</td>
-      <td>2015-07-31</td>
-      <td>8314.0</td>
-      <td>821</td>
-      <td>1</td>
-      <td>1</td>
-      <td>0</td>
-      <td>1</td>
-      <td>a</td>
-      <td>...</td>
-      <td>12.0</td>
-      <td>2006.0</td>
-      <td>1</td>
-      <td>14.0</td>
-      <td>2011.0</td>
-      <td>Jan,Apr,Jul,Oct</td>
-      <td>2015</td>
-      <td>7</td>
-      <td>False</td>
-      <td>True</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>4</td>
-      <td>4</td>
-      <td>2015-07-31</td>
-      <td>13995.0</td>
-      <td>1498</td>
-      <td>1</td>
-      <td>1</td>
-      <td>0</td>
-      <td>1</td>
-      <td>c</td>
-      <td>...</td>
-      <td>9.0</td>
-      <td>2009.0</td>
-      <td>0</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>2015</td>
-      <td>7</td>
-      <td>False</td>
-      <td>True</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>5</td>
-      <td>4</td>
-      <td>2015-07-31</td>
-      <td>4822.0</td>
-      <td>559</td>
-      <td>1</td>
-      <td>1</td>
-      <td>0</td>
-      <td>1</td>
-      <td>a</td>
-      <td>...</td>
-      <td>4.0</td>
-      <td>2015.0</td>
-      <td>0</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>2015</td>
-      <td>7</td>
-      <td>False</td>
-      <td>True</td>
-    </tr>
-  </tbody>
-</table>
-<p>5 rows × 22 columns</p>
-</div>
-
-
-
-
-```python
-print(" This analysis is btween ", combined_dataset['Date'].min(), "  and ", combined_dataset["Date"].max())
-```
-
-     This analysis is btween  2013-01-01 00:00:00   and  2015-07-31 00:00:00
-    
-
-
-```python
-plt.figure(figsize=(12, 6))
-sns.heatmap(combined_dataset.isnull(), cbar=False, cmap='Blues', yticklabels=False)
-plt.title("Missing Values Distribution")
-plt.show()
-```
-
-
-    
-![png](README_files/README_18_0.png)
-    
-
 
 
 ```python
@@ -738,6 +596,19 @@ combined_dataset.isnull().sum()
 
 
 
+Lets proceed with our inspection, by looking and the unique values of each column we are able to have, throgh this inspection we are able to see that: - StateHolida: this coulmn should take 4 categories: 
+    -
+    
+
+- Lets proceed with our inspection, by looking and the unique values of each column we are able to have, throgh this inspection we are able to see that: 
+  - StateHolida: this coulmn should take 4 categories: 
+    - 'a' = public holiday
+    - 'b' = Easter holiday
+    - 'c' = Christmas
+    - '0' = None
+    - please notice that the value 0 that represents None should be inputed as a string and not a number, when we look at the distinct values of the StateHoliday column we see that at least one observation was inputed or recorded as a number and we proceed correcting this for forther analysis.
+
+
 
 ```python
 # unique values in dataset
@@ -771,8 +642,6 @@ for col in columns:
     IsWeekend --------> [False  True]
     IsWeekday --------> [ True False]
     
-
-## 2.3. Sales Overview
 
 
 ```python
@@ -814,7 +683,7 @@ plt.show()
 
 
     
-![png](README_files/README_23_0.png)
+![png](README_files/README_30_0.png)
     
 
 
@@ -839,38 +708,7 @@ plt.show()
 
 
     
-![png](README_files/README_24_0.png)
-    
-
-
-
-```python
-# Create a 1x2 subplot (1 row, 2 columns)
-plt.figure(figsize=(15, 6))
-
-# First subplot (Sales distribution by Year)
-plt.subplot(1, 2, 1)  # (rows, columns, position)
-sns.boxplot(x='Year', y='Sales', data=combined_dataset, fill=False, gap=.1, linecolor="#137", linewidth=.75, width=.5)
-plt.title('Sales Distribution by Year')
-plt.xlabel('Year')
-plt.ylabel('Sales')
-
-# Second subplot (Sales distribution by Month)
-plt.subplot(1, 2, 2)
-sns.boxplot(x='Month', y='Sales', data=combined_dataset, fill=False, gap=.1, linecolor="#137", linewidth=.75, width=.5)
-plt.title('Sales Distribution by Month')
-plt.xlabel('Month')
-plt.ylabel('Sales')
-
-# Show both plots
-plt.tight_layout()  # Adjust layout to prevent overlap
-plt.show()
-
-```
-
-
-    
-![png](README_files/README_25_0.png)
+![png](README_files/README_31_0.png)
     
 
 
@@ -911,7 +749,38 @@ plt.show()
 
 
     
-![png](README_files/README_26_1.png)
+![png](README_files/README_32_1.png)
+    
+
+
+
+```python
+# Create a 1x2 subplot (1 row, 2 columns)
+plt.figure(figsize=(15, 6))
+
+# First subplot (Sales distribution by Year)
+plt.subplot(1, 2, 1)  # (rows, columns, position)
+sns.boxplot(x='Year', y='Sales', data=combined_dataset, fill=False, gap=.1, linecolor="#137", linewidth=.75, width=.5)
+plt.title('Sales Distribution by Year')
+plt.xlabel('Year')
+plt.ylabel('Sales')
+
+# Second subplot (Sales distribution by Month)
+plt.subplot(1, 2, 2)
+sns.boxplot(x='Month', y='Sales', data=combined_dataset, fill=False, gap=.1, linecolor="#137", linewidth=.75, width=.5)
+plt.title('Sales Distribution by Month')
+plt.xlabel('Month')
+plt.ylabel('Sales')
+
+# Show both plots
+plt.tight_layout()  # Adjust layout to prevent overlap
+plt.show()
+
+```
+
+
+    
+![png](README_files/README_33_0.png)
     
 
 
@@ -946,24 +815,26 @@ plt.show()
 
 
     
-![png](README_files/README_28_0.png)
+![png](README_files/README_35_0.png)
     
 
 
+## 3. Data Preparation
 
-```python
-
-```
-
-
-```python
-
-```
+### 3.1. Handle missing values
 
 
 ```python
 
 ```
+
+### 3.2. Handle Outliers
+
+### 3.3. Explore exceptional cases
+
+## 4. Modeling
+
+## 5. Evaluation
 
 
 ```python
